@@ -25,6 +25,12 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import javax.imageio.ImageIO;
+
+
 
 /** 관광지 이미지와 사용자의 첨부 이미지를 이용해 AI 이미지를 표시하는 다이얼로그. */
 public class ImageGenerationDialog extends JDialog {
@@ -52,7 +58,10 @@ public class ImageGenerationDialog extends JDialog {
 	private File userImageFile;
 	private int waitingSeconds;
 	private Timer waitingTimer;
-	
+	private final JButton downloadButton = new JButton("생성 이미지 다운로드");
+
+	private BufferedImage normalGeneratedImage;
+	private BufferedImage funGeneratedImage;
 	
 	public ImageGenerationDialog(Window owner) {
 		this(owner, new File("img", "image01.jpg"));
@@ -71,6 +80,13 @@ public class ImageGenerationDialog extends JDialog {
 		add(createButtonPanel(), BorderLayout.SOUTH);
 
 		showDestinationImage();
+		
+		
+		downloadButton.setVisible(false);
+		downloadButton.setEnabled(false);
+		
+		
+		
 		attachButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent event) {
@@ -83,6 +99,18 @@ public class ImageGenerationDialog extends JDialog {
 				generateImage();
 			}
 		});
+		
+		downloadButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+				saveGeneratedImages();
+			}
+		});
+		
+		
+		
+		
+		
 	}
 
 	private JPanel createImagePanels() {
@@ -104,6 +132,7 @@ public class ImageGenerationDialog extends JDialog {
 		JPanel panel = new JPanel();
 		panel.add(attachButton);
 		panel.add(generateButton);
+		panel.add(downloadButton);
 		panel.add(waitingLabel);
 		return panel;
 	}
@@ -151,6 +180,15 @@ public class ImageGenerationDialog extends JDialog {
 		attachButton.setEnabled(false);
 		normalResultImageLabel.setIcon(null);
 		funResultImageLabel.setIcon(null);
+		
+		downloadButton.setEnabled(false);
+		downloadButton.setVisible(false);
+
+		normalResultImageLabel.setIcon(null);
+		funResultImageLabel.setIcon(null);
+		
+		
+		
 		normalResultImageLabel.setText("일반 여행 사진을 생성하고 있습니다...");
 		funResultImageLabel.setText("재미있는 여행 사진을 생성하고 있습니다...");
 		startWaitingTimer();
@@ -165,15 +203,23 @@ public class ImageGenerationDialog extends JDialog {
 
 			@Override
 			protected void done() {
-				stopWaitingTimer();
-				generateButton.setEnabled(true);
-				attachButton.setEnabled(true);
 				try {
 					BufferedImage[] results = get();
-					normalResultImageLabel.setIcon(new ImageIcon(scaleImage(results[0], 400, 220)));
+
+					normalGeneratedImage = results[0];
+					funGeneratedImage = results[1];
+
+					normalResultImageLabel.setIcon(
+							new ImageIcon(scaleImage(normalGeneratedImage, 400, 220)));
 					normalResultImageLabel.setText("");
-					funResultImageLabel.setIcon(new ImageIcon(scaleImage(results[1], 400, 220)));
+
+					funResultImageLabel.setIcon(
+							new ImageIcon(scaleImage(funGeneratedImage, 400, 220)));
 					funResultImageLabel.setText("");
+
+					downloadButton.setVisible(true);
+					downloadButton.setEnabled(true);
+
 					waitingLabel.setText("생성 완료: " + waitingSeconds + "초");
 				} catch (InterruptedException exception) {
 					Thread.currentThread().interrupt();
@@ -181,6 +227,10 @@ public class ImageGenerationDialog extends JDialog {
 				} catch (ExecutionException exception) {
 					showGenerationError(exception.getCause());
 				}
+				
+				
+				
+				
 			}
 		}.execute();
 	}
@@ -205,13 +255,27 @@ public class ImageGenerationDialog extends JDialog {
 	}
 
 	private void showGenerationError(Throwable exception) {
+		normalGeneratedImage = null;
+		funGeneratedImage = null;
+
+		downloadButton.setEnabled(false);
+		downloadButton.setVisible(false);
+
 		normalResultImageLabel.setIcon(null);
 		funResultImageLabel.setIcon(null);
 		normalResultImageLabel.setText("이미지 생성에 실패했습니다.");
 		funResultImageLabel.setText("이미지 생성에 실패했습니다.");
 		waitingLabel.setText("생성 실패: " + waitingSeconds + "초");
-		String message = exception.getMessage() == null ? "알 수 없는 오류" : exception.getMessage();
-		JOptionPane.showMessageDialog(this, message, "이미지 생성 실패", JOptionPane.ERROR_MESSAGE);
+
+		String message = exception.getMessage() == null
+				? "알 수 없는 오류"
+				: exception.getMessage();
+
+		JOptionPane.showMessageDialog(
+				this,
+				message,
+				"이미지 생성 실패",
+				JOptionPane.ERROR_MESSAGE);
 	}
 
 	private Image scaleImage(Image image, int maxWidth, int maxHeight) {
@@ -222,6 +286,95 @@ public class ImageGenerationDialog extends JDialog {
 		}
 		double ratio = Math.min((double) maxWidth / width, (double) maxHeight / height);
 		return image.getScaledInstance((int) (width * ratio), (int) (height * ratio), Image.SCALE_SMOOTH);
+	}
+	
+	
+	private void saveGeneratedImages() {
+		if (normalGeneratedImage == null || funGeneratedImage == null) {
+			JOptionPane.showMessageDialog(
+					this,
+					"저장할 생성 이미지가 없습니다.",
+					"이미지 없음",
+					JOptionPane.WARNING_MESSAGE);
+			return;
+		}
+
+		JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle("이미지를 저장할 폴더 선택");
+		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		chooser.setAcceptAllFileFilterUsed(false);
+
+		int result = chooser.showSaveDialog(this);
+		if (result != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+
+		File selectedDirectory = chooser.getSelectedFile();
+
+		if (!selectedDirectory.exists() && !selectedDirectory.mkdirs()) {
+			JOptionPane.showMessageDialog(
+					this,
+					"저장 폴더를 생성하지 못했습니다.",
+					"저장 실패",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		if (!selectedDirectory.isDirectory()) {
+			JOptionPane.showMessageDialog(
+					this,
+					"올바른 폴더를 선택하세요.",
+					"저장 실패",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		String timestamp = LocalDateTime.now().format(
+				DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+
+		File normalFile = new File(
+				selectedDirectory,
+				"travel_normal_" + timestamp + ".png");
+
+		File funFile = new File(
+				selectedDirectory,
+				"travel_fun_" + timestamp + ".png");
+
+		downloadButton.setEnabled(false);
+
+		try {
+			boolean normalSaved = ImageIO.write(
+					normalGeneratedImage,
+					"png",
+					normalFile);
+
+			boolean funSaved = ImageIO.write(
+					funGeneratedImage,
+					"png",
+					funFile);
+
+			if (!normalSaved || !funSaved) {
+				throw new IOException("PNG 이미지 저장 기능을 찾지 못했습니다.");
+			}
+
+			JOptionPane.showMessageDialog(
+					this,
+					"이미지 2장을 저장했습니다.\n\n"
+							+ normalFile.getAbsolutePath() + "\n"
+							+ funFile.getAbsolutePath(),
+					"저장 완료",
+					JOptionPane.INFORMATION_MESSAGE);
+
+		} catch (IOException exception) {
+			JOptionPane.showMessageDialog(
+					this,
+					"이미지 저장 중 오류가 발생했습니다.\n"
+							+ exception.getMessage(),
+					"저장 실패",
+					JOptionPane.ERROR_MESSAGE);
+		} finally {
+			downloadButton.setEnabled(true);
+		}
 	}
 
 	/** TripInfoView 연동 전 단독 화면 확인용 실행 메서드. */
