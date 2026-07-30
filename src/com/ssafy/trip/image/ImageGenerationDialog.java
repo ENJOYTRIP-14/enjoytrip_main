@@ -9,6 +9,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
 import javax.swing.BorderFactory;
@@ -152,8 +155,12 @@ public class ImageGenerationDialog extends JDialog {
 		new SwingWorker<BufferedImage[], Void>() {
 			@Override
 			protected BufferedImage[] doInBackground() throws Exception {
-				BufferedImage normalImage = imageClient.generate(DESTINATION_IMAGE_FILE, userImageFile, NORMAL_PROMPT);
-				BufferedImage funImage = imageClient.generate(DESTINATION_IMAGE_FILE, userImageFile, FUN_PROMPT);
+				CompletableFuture<BufferedImage> normalImageFuture = CompletableFuture.supplyAsync(
+						() -> generateImageInParallel(NORMAL_PROMPT));
+				CompletableFuture<BufferedImage> funImageFuture = CompletableFuture.supplyAsync(
+						() -> generateImageInParallel(FUN_PROMPT));
+				BufferedImage normalImage = normalImageFuture.get();
+				BufferedImage funImage = funImageFuture.get();
 				return new BufferedImage[] { normalImage, funImage };
 			}
 
@@ -177,6 +184,14 @@ public class ImageGenerationDialog extends JDialog {
 				}
 			}
 		}.execute();
+	}
+
+	private BufferedImage generateImageInParallel(String prompt) {
+		try {
+			return imageClient.generate(DESTINATION_IMAGE_FILE, userImageFile, prompt);
+		} catch (IOException exception) {
+			throw new CompletionException(exception);
+		}
 	}
 
 	private void startWaitingTimer() {

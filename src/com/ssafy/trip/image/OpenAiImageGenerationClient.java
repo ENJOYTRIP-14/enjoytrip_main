@@ -54,6 +54,8 @@ public class OpenAiImageGenerationClient {
 			writeTextPart(output, boundary, "model", MODEL);
 			writeTextPart(output, boundary, "prompt", prompt);
 			writeTextPart(output, boundary, "quality", "low");
+			writeTextPart(output, boundary, "output_format", "jpeg");
+			writeTextPart(output, boundary, "output_compression", "85");
 			writeFilePart(output, boundary, "image[]", destinationImage);
 			writeFilePart(output, boundary, "image[]", userImage);
 			writeUtf8(output, "--" + boundary + "--\r\n");
