@@ -16,6 +16,22 @@ SSAFY 16기 서울 14반 양유진, 정지혁
 
 ---
 
+## 📁 패키지 구조 (Package Structure)
+com.ssafy.trip
+├── image/                     # AI 이미지 생성 모듈
+│   ├── ImageGenerationDialog.java   # AI 합성 결과 출력 다이얼로그 (Swing)
+│   └── OpenAiImageGenerationClient.java # OpenAI Image Edit API 통신 클라이언트
+├── model/                     # 데이터 및 비즈니스 로직
+│   ├── dto/                   # TripDto, TripSearchDto
+│   └── service/               # TripService, TripServiceImpl
+├── util/                      # XML 파싱 Utility
+│   ├── TouristDestinationSAXHandler.java
+│   └── TouristDestinationSAXParser.java
+└── view/                      # 메인 UI
+    └── TripInfoView.java      # 메인 관광지 정보 화면
+
+---
+
 ## 요구사항 명세
 
 | 순번 | 분류 | 요구사항 명 | 요구사항 명세 | 우선 순위 |
