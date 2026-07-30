@@ -77,5 +77,4 @@ com.ssafy.trip
 - 요구 사항 번호: F104
 - F103 관광자 정보 상세 조회 화면에 배치된 AI 이미지 버튼을 클릭하면 사용자의 사진과 관광지 사진을 적절히 합성한 2장의 이미지가 생성된다.
 - 사용 API: OpenAI gpt-image-2
-
-![F104 구현 이미지](./img/image04.jpg)
+<img width="1672" height="941" alt="travel_fun_20260730_151052" src="https://github.com/user-attachments/assets/0b1a44bb-6bc2-4332-8d4a-a2830de7ae3d" />
