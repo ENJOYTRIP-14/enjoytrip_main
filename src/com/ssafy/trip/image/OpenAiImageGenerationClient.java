@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.imageio.ImageIO;
 
 /** OpenAI Image Edit API를 호출해 메모리상의 이미지를 반환한다. */
@@ -32,8 +31,15 @@ public class OpenAiImageGenerationClient {
 	private static final Pattern ERROR_MESSAGE_PATTERN = Pattern.compile("\\\"message\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"");
 
 	public BufferedImage generate(File destinationImage, File userImage) throws IOException {
+		return generate(destinationImage, userImage, createDefaultPrompt());
+	}
+
+	public BufferedImage generate(File destinationImage, File userImage, String prompt) throws IOException {
 		validateImage(destinationImage, "관광지 이미지");
 		validateImage(userImage, "사용자 이미지");
+		if (prompt == null || prompt.trim().isEmpty()) {
+			throw new IOException("이미지 생성 프롬프트가 비어 있습니다.");
+		}
 
 		String boundary = "----EnjoyTripBoundary" + UUID.randomUUID().toString().replace("-", "");
 		HttpURLConnection connection = (HttpURLConnection) new URL(API_URL).openConnection();
@@ -46,7 +52,8 @@ public class OpenAiImageGenerationClient {
 
 		try (OutputStream output = connection.getOutputStream()) {
 			writeTextPart(output, boundary, "model", MODEL);
-			writeTextPart(output, boundary, "prompt", createPrompt());
+			writeTextPart(output, boundary, "prompt", prompt);
+			writeTextPart(output, boundary, "quality", "low");
 			writeFilePart(output, boundary, "image[]", destinationImage);
 			writeFilePart(output, boundary, "image[]", userImage);
 			writeUtf8(output, "--" + boundary + "--\r\n");
@@ -90,7 +97,7 @@ public class OpenAiImageGenerationClient {
 		throw new IOException(".env 파일에 OPENAI_API_KEY 값이 없습니다.");
 	}
 
-	private String createPrompt() {
+	private String createDefaultPrompt() {
 		return "Use the first image as the tourist destination background. "
 				+ "Place the person from the second image naturally in that destination. "
 				+ "Preserve the person's facial features and clothing as much as possible. "
@@ -127,7 +134,9 @@ public class OpenAiImageGenerationClient {
 		}
 		writeUtf8(output, "\r\n");
 	}
-
+	
+	
+	// ------------------------------------------------------------------------------
 	private String readResponse(InputStream input) throws IOException {
 		if (input == null) {
 			return "응답 본문이 없습니다.";
@@ -141,7 +150,9 @@ public class OpenAiImageGenerationClient {
 			return new String(output.toByteArray(), StandardCharsets.UTF_8);
 		}
 	}
-
+	// ------------------------------------------------------------------------------
+	
+	
 	private String extractErrorMessage(String response) {
 		Matcher matcher = ERROR_MESSAGE_PATTERN.matcher(response);
 		return matcher.find() ? matcher.group(1) : response;

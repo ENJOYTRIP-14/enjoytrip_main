@@ -23,6 +23,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.Timer;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 /** 관광지 이미지와 사용자의 첨부 이미지를 이용해 AI 이미지를 표시하는 다이얼로그. */
@@ -30,25 +31,36 @@ public class ImageGenerationDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
 	private static final File DESTINATION_IMAGE_FILE = new File("img", "image01.jpg");
+	private static final String NORMAL_PROMPT = "Use the first image as the tourist destination background. "
+			+ "Place the person from the second image naturally in that destination. "
+			+ "Preserve the person's facial features and clothing as much as possible. "
+			+ "Create a realistic travel souvenir photo with natural lighting, shadows, and perspective.";
+	private static final String FUN_PROMPT = "Use the first image as the tourist destination background and the second image as the person reference. "
+			+ "Create a playful, funny travel souvenir photo. Keep the person recognizable, but give them an exaggerated joyful pose "
+			+ "and make them interact humorously with a large, harmless landmark-related object in the scene. "
+			+ "Keep it family-friendly, colorful, natural-looking, and clearly set in the destination.";
 
 	private final JLabel destinationImageLabel = createImageLabel("관광지 이미지");
 	private final JLabel userImageLabel = createImageLabel("사용자 이미지를 첨부하세요");
-	private final JLabel resultImageLabel = createImageLabel("생성 결과가 여기에 표시됩니다");
+	private final JLabel normalResultImageLabel = createImageLabel("일반 AI 생성 이미지");
+	private final JLabel funResultImageLabel = createImageLabel("재미있는 AI 생성 이미지");
 	private final JButton attachButton = new JButton("이미지 첨부");
 	private final JButton generateButton = new JButton("AI 생성 시작");
+	private final JLabel waitingLabel = new JLabel(" ");
 	private final OpenAiImageGenerationClient imageClient = new OpenAiImageGenerationClient();
 
 	private File userImageFile;
+	private int waitingSeconds;
+	private Timer waitingTimer;
 
 	public ImageGenerationDialog(Window owner) {
 		super(owner, "AI 여행 이미지 생성", ModalityType.APPLICATION_MODAL);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setLayout(new BorderLayout(10, 10));
-		setSize(980, 650);
+		setSize(980, 720);
 		setLocationRelativeTo(owner);
 
-		add(createInputPanel(), BorderLayout.NORTH);
-		add(resultImageLabel, BorderLayout.CENTER);
+		add(createImagePanels(), BorderLayout.CENTER);
 		add(createButtonPanel(), BorderLayout.SOUTH);
 
 		showDestinationImage();
@@ -66,18 +78,26 @@ public class ImageGenerationDialog extends JDialog {
 		});
 	}
 
-	private JPanel createInputPanel() {
-		JPanel panel = new JPanel(new GridLayout(1, 2, 10, 0));
+	private JPanel createImagePanels() {
+		JPanel panel = new JPanel(new GridLayout(2, 1, 0, 10));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 10));
-		panel.add(destinationImageLabel);
-		panel.add(userImageLabel);
+		panel.add(createImageRow(destinationImageLabel, userImageLabel));
+		panel.add(createImageRow(normalResultImageLabel, funResultImageLabel));
 		return panel;
+	}
+
+	private JPanel createImageRow(JLabel leftImageLabel, JLabel rightImageLabel) {
+		JPanel row = new JPanel(new GridLayout(1, 2, 10, 0));
+		row.add(leftImageLabel);
+		row.add(rightImageLabel);
+		return row;
 	}
 
 	private JPanel createButtonPanel() {
 		JPanel panel = new JPanel();
 		panel.add(attachButton);
 		panel.add(generateButton);
+		panel.add(waitingLabel);
 		return panel;
 	}
 
@@ -123,23 +143,32 @@ public class ImageGenerationDialog extends JDialog {
 
 		generateButton.setEnabled(false);
 		attachButton.setEnabled(false);
-		resultImageLabel.setIcon(null);
-		resultImageLabel.setText("AI 이미지를 생성하고 있습니다...");
+		normalResultImageLabel.setIcon(null);
+		funResultImageLabel.setIcon(null);
+		normalResultImageLabel.setText("일반 여행 사진을 생성하고 있습니다...");
+		funResultImageLabel.setText("재미있는 여행 사진을 생성하고 있습니다...");
+		startWaitingTimer();
 
-		new SwingWorker<BufferedImage, Void>() {
+		new SwingWorker<BufferedImage[], Void>() {
 			@Override
-			protected BufferedImage doInBackground() throws Exception {
-				return imageClient.generate(DESTINATION_IMAGE_FILE, userImageFile);
+			protected BufferedImage[] doInBackground() throws Exception {
+				BufferedImage normalImage = imageClient.generate(DESTINATION_IMAGE_FILE, userImageFile, NORMAL_PROMPT);
+				BufferedImage funImage = imageClient.generate(DESTINATION_IMAGE_FILE, userImageFile, FUN_PROMPT);
+				return new BufferedImage[] { normalImage, funImage };
 			}
 
 			@Override
 			protected void done() {
+				stopWaitingTimer();
 				generateButton.setEnabled(true);
 				attachButton.setEnabled(true);
 				try {
-					BufferedImage result = get();
-					resultImageLabel.setIcon(new ImageIcon(scaleImage(result, 850, 340)));
-					resultImageLabel.setText("");
+					BufferedImage[] results = get();
+					normalResultImageLabel.setIcon(new ImageIcon(scaleImage(results[0], 400, 220)));
+					normalResultImageLabel.setText("");
+					funResultImageLabel.setIcon(new ImageIcon(scaleImage(results[1], 400, 220)));
+					funResultImageLabel.setText("");
+					waitingLabel.setText("생성 완료: " + waitingSeconds + "초");
 				} catch (InterruptedException exception) {
 					Thread.currentThread().interrupt();
 					showGenerationError(exception);
@@ -150,9 +179,31 @@ public class ImageGenerationDialog extends JDialog {
 		}.execute();
 	}
 
+	private void startWaitingTimer() {
+		waitingSeconds = 0;
+		waitingLabel.setText("AI 이미지 생성 중... 0초");
+		waitingTimer = new Timer(1000, new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+				waitingSeconds++;
+				waitingLabel.setText("AI 이미지 생성 중... " + waitingSeconds + "초");
+			}
+		});
+		waitingTimer.start();
+	}
+
+	private void stopWaitingTimer() {
+		if (waitingTimer != null) {
+			waitingTimer.stop();
+		}
+	}
+
 	private void showGenerationError(Throwable exception) {
-		resultImageLabel.setIcon(null);
-		resultImageLabel.setText("이미지 생성에 실패했습니다.");
+		normalResultImageLabel.setIcon(null);
+		funResultImageLabel.setIcon(null);
+		normalResultImageLabel.setText("이미지 생성에 실패했습니다.");
+		funResultImageLabel.setText("이미지 생성에 실패했습니다.");
+		waitingLabel.setText("생성 실패: " + waitingSeconds + "초");
 		String message = exception.getMessage() == null ? "알 수 없는 오류" : exception.getMessage();
 		JOptionPane.showMessageDialog(this, message, "이미지 생성 실패", JOptionPane.ERROR_MESSAGE);
 	}
