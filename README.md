@@ -64,8 +64,10 @@ com.ssafy.trip
 - 관광지 정보 목록화면의 상단에 검색 조건과 검색어를 입력한 뒤 검색버튼을 클릭하면 조건에 맞는 관광지 정보를 표시한다.
 #### 관광지명 키워드로 검색 시
 <img width="593" height="691" alt="image" src="https://github.com/user-attachments/assets/bc7d4f60-6a01-43d4-898f-fe3592a19810" />
-### 주소 키워드로 검색 시
+
+#### 주소 키워드로 검색 시
 <img width="596" height="584" alt="image" src="https://github.com/user-attachments/assets/382e8c3f-9e2c-4efc-a3df-a73abc60f28b" />
+
 
 #### 3. 관광지 정보 상세 조회
 
