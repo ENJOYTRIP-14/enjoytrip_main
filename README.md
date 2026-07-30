@@ -4,6 +4,18 @@
 
 SSAFY 16기 서울 14반 양유진, 정지혁
 
+
+---
+
+## 🛠️ 개발 및 실행 환경 (Environment)
+
+- **Language:** Java 8 / 11 이상
+- **GUI Framework:** Java Swing
+- **Data Format:** XML (SAX Parser)
+- **External API:** OpenAI API (`gpt-image-2`)
+
+---
+
 ## 요구사항 명세
 
 | 순번 | 분류 | 요구사항 명 | 요구사항 명세 | 우선 순위 |
