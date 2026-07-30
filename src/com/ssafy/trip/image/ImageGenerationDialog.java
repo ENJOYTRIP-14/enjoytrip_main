@@ -30,7 +30,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 public class ImageGenerationDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
-	private static final File DESTINATION_IMAGE_FILE = new File("img", "image01.jpg");
+	private final File destinationImageFile;
 	private static final String NORMAL_PROMPT = "Use the first image as the tourist destination background. "
 			+ "Place the person from the second image naturally in that destination. "
 			+ "Preserve the person's facial features and clothing as much as possible. "
@@ -52,9 +52,16 @@ public class ImageGenerationDialog extends JDialog {
 	private File userImageFile;
 	private int waitingSeconds;
 	private Timer waitingTimer;
-
+	
+	
 	public ImageGenerationDialog(Window owner) {
+		this(owner, new File("img", "image01.jpg"));
+	}
+
+	public ImageGenerationDialog(Window owner, File destinationImageFile) {
 		super(owner, "AI 여행 이미지 생성", ModalityType.APPLICATION_MODAL);
+		this.destinationImageFile = destinationImageFile;
+		
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setLayout(new BorderLayout(10, 10));
 		setSize(980, 720);
@@ -109,14 +116,14 @@ public class ImageGenerationDialog extends JDialog {
 	}
 
 	private void showDestinationImage() {
-		if (!DESTINATION_IMAGE_FILE.isFile()) {
-			destinationImageLabel.setText("임시 관광지 이미지를 찾지 못했습니다: img/image01.jpg");
-			return;
-		}
-		destinationImageLabel.setIcon(
-				new ImageIcon(scaleImage(new ImageIcon(DESTINATION_IMAGE_FILE.getPath()).getImage(), 400, 220)));
-		destinationImageLabel.setText("");
-	}
+        if (destinationImageFile == null || !destinationImageFile.isFile()) {
+            destinationImageLabel.setText("관광지 이미지를 찾지 못했습니다.");
+            return;
+        }
+        destinationImageLabel.setIcon(
+                new ImageIcon(scaleImage(new ImageIcon(destinationImageFile.getPath()).getImage(), 400, 220)));
+        destinationImageLabel.setText("");
+    }
 
 	private void selectUserImage() {
 		JFileChooser chooser = new JFileChooser();
@@ -132,14 +139,13 @@ public class ImageGenerationDialog extends JDialog {
 
 	private void generateImage() {
 		if (userImageFile == null) {
-			JOptionPane.showMessageDialog(this, "먼저 사용자 이미지를 첨부하세요.", "이미지 필요", JOptionPane.WARNING_MESSAGE);
-			return;
-		}
-		if (!DESTINATION_IMAGE_FILE.isFile()) {
-			JOptionPane.showMessageDialog(this, "임시 관광지 이미지(img/image01.jpg)를 찾지 못했습니다.", "이미지 필요",
-					JOptionPane.WARNING_MESSAGE);
-			return;
-		}
+            JOptionPane.showMessageDialog(this, "먼저 사용자 이미지를 첨부하세요.", "이미지 필요", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (destinationImageFile == null || !destinationImageFile.isFile()) {
+            JOptionPane.showMessageDialog(this, "관광지 이미지를 찾지 못했습니다.", "이미지 필요", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
 		generateButton.setEnabled(false);
 		attachButton.setEnabled(false);
@@ -152,8 +158,8 @@ public class ImageGenerationDialog extends JDialog {
 		new SwingWorker<BufferedImage[], Void>() {
 			@Override
 			protected BufferedImage[] doInBackground() throws Exception {
-				BufferedImage normalImage = imageClient.generate(DESTINATION_IMAGE_FILE, userImageFile, NORMAL_PROMPT);
-				BufferedImage funImage = imageClient.generate(DESTINATION_IMAGE_FILE, userImageFile, FUN_PROMPT);
+				BufferedImage normalImage = imageClient.generate(destinationImageFile, userImageFile, NORMAL_PROMPT);
+				BufferedImage funImage = imageClient.generate(destinationImageFile, userImageFile, FUN_PROMPT);
 				return new BufferedImage[] { normalImage, funImage };
 			}
 

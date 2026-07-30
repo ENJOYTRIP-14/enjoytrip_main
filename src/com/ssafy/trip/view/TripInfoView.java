@@ -4,8 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Label;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -17,12 +15,14 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
+import com.ssafy.trip.image.ImageGenerationDialog;
 import com.ssafy.trip.model.dto.TripDto;
 import com.ssafy.trip.model.dto.TripSearchDto;
 import com.ssafy.trip.model.service.TripService;
@@ -59,6 +59,9 @@ public class TripInfoView {
 
 	/** 화면에 표시하고 있는 주택 */
 	private TripDto curTrip;
+	
+	/** 심화 기능: 이미지 생성 기능**/
+	private JButton generateImageBt;
 
 	public TripInfoView() {
 		/* Service들 생성 */
@@ -82,6 +85,10 @@ public class TripInfoView {
 
 	private void showTripInfo(int num) {
 		curTrip = tripService.search(num);
+		
+		if(curTrip == null) {
+			return;
+		}
 
 		tripInfoL[0].setText("");
 		tripInfoL[1].setText("");
@@ -94,22 +101,23 @@ public class TripInfoView {
 		tripInfoL[8].setText(curTrip.getInfo());
 		tripInfoL[9].setText("");
 
-		ImageIcon icon = null;
-		if (curTrip.getImg() != null && curTrip.getImg().trim().length() != 0) {
-			String img = curTrip.getImg();
-			File file = new File("img", img);
+		String img = curTrip.getImg();
+	    
+	    // DB의 img 값이 비어있거나 실제 파일이 img 폴더에 없는 경우
+	    if (img == null || img.trim().length() == 0 || !new File("img", img).exists()) {
+	        int randomNum = (int)(Math.random() * 11) + 1;
+	        img = String.format("image%02d.jpg", randomNum);
+	        
+	        // ★ 핵심: curTrip DTO의 img 필드에도 매핑된 실제 이미지 파일명을 세팅해줍니다!
+	        curTrip.setImg(img); 
+	    }
 
-			if (!file.exists())
-				img = "no_image.jpg";
-			icon = new ImageIcon("img/" + img);
-
-		} else {
-			icon = new ImageIcon("img/no_image.jpg");
-		}
-		Image image = icon.getImage();
-		Image changeImage = image.getScaledInstance(570, 470, Image.SCALE_SMOOTH);
-		ImageIcon changeIcon = new ImageIcon(changeImage);
-		imgL.setIcon(changeIcon);
+	    // 셋팅된 이미지를 화면 Label에 배치
+	    ImageIcon icon = new ImageIcon("img/" + img);
+	    Image image = icon.getImage();
+	    Image changeImage = image.getScaledInstance(570, 470, Image.SCALE_SMOOTH);
+	    ImageIcon changeIcon = new ImageIcon(changeImage);
+	    imgL.setIcon(changeIcon);
 	}
 
 	/** 메인 화면인 관광지 목록을 위한 화면 셋팅하는 메서드 */
@@ -132,7 +140,14 @@ public class TripInfoView {
 			leftR.add(tripInfoL[i]);
 		}
 		imgL = new JLabel();
-		leftCenter.add(imgL, "Center");
+		
+		generateImageBt = new JButton("AI 이미지 생성");
+		
+		JPanel imgPanel = new JPanel(new BorderLayout(0,5));
+		imgPanel.add(imgL, "Center");
+		imgPanel.add(generateImageBt, "South");
+				
+		leftCenter.add(imgPanel, "Center");
 		leftCenter.add(leftR, "South");
 
 		left.add(new JLabel("관광지 정보", JLabel.CENTER), "North");
@@ -180,25 +195,34 @@ public class TripInfoView {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				int row = tripTable.getSelectedRow();
+				if(row == -1)return;
+				
 				int code = Integer.parseInt(((String) tripModel.getValueAt(row, 0)).trim());
-				showTripInfo(code);
+				
+				if(curTrip == null || curTrip.getNum() != code) {					
+					showTripInfo(code);
+				}
 			}
 		});
 
 		// complete code #01
-		// 아래의 코드를 참조하여 아래 라인을 uncomment 하고 searchBt.addActionList() 를 Lambda 표현식으로 바꾸세요.
-		// searchBt.addActionListener( /* 여기 */ );
+		 searchBt.addActionListener(e-> searchTrips());
+		 wordTf.addActionListener(e -> searchTrips());
+		 
+		 generateImageBt.addActionListener(e -> {
+			    // 1. 선택된 관광지가 없는 경우 예외 처리
+			    if (curTrip == null) {
+			        JOptionPane.showMessageDialog(frame, "관광지를 먼저 선택해주세요.", "알림", JOptionPane.WARNING_MESSAGE);
+			        return;
+			    }
 
-		// 참조코드 시작 - 위 코드를 완성 후 삭제 또는 comment 처리하세요.
-		ActionListener buttonHandler = new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				searchTrips();
-			}
-		};
-		
-		searchBt.addActionListener( buttonHandler );
-		// 참조코드 종료
+			    // 2. showTripInfo()에서 이미 검증 완료된 이미지 파일 가져오기
+			    File destinationImgFile = new File("img", curTrip.getImg());
+
+			    // 3. 다이얼로그 호출 (화면에 보이는 것과 100% 동일한 파일이 전달됨)
+			    ImageGenerationDialog dialog = new ImageGenerationDialog(frame, destinationImgFile);
+			    dialog.setVisible(true);
+			});
 
 		showTrips();
 	}
@@ -241,7 +265,7 @@ public class TripInfoView {
 		}
 	}
 
-//	public static void main(String[] args) {
-//		new TripInfoView();
-//	}
+	public static void main(String[] args) {
+		new TripInfoView();
+	}
 }
