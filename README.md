@@ -84,4 +84,6 @@ com.ssafy.trip
 <img width="961" height="704" alt="스크린샷 2026-07-30 151939" src="https://github.com/user-attachments/assets/5ea7667b-be10-4cdc-a68f-00e93df2ece7" />
 <img width="1448" height="1086" alt="travel_normal_20260730_152128" src="https://github.com/user-attachments/assets/75af8d15-3dff-4f78-8134-b792b1b54af6" />
 <img width="1448" height="1086" alt="travel_fun_20260730_152128" src="https://github.com/user-attachments/assets/74d131a5-229e-4514-b280-56b8a3788ff4" />
+<img width="1193" height="798" alt="image" src="https://github.com/user-attachments/assets/2fb2d137-c5d7-403f-8206-2bb64d442e47" />
+
 
