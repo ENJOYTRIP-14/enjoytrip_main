@@ -19,17 +19,24 @@ SSAFY 16기 서울 14반 양유진, 정지혁
 ## 패키지 구조 (Package Structure)
 ```
 com.ssafy.trip
-├── image/                     # AI 이미지 생성 모듈
-│   ├── ImageGenerationDialog.java   # AI 합성 결과 출력 다이얼로그 (Swing)
+├── image/                             # AI 이미지 생성 모듈
+│   ├── ImageGenerationDialog.java     # AI 합성 결과 출력 다이얼로그 (Swing)
 │   └── OpenAiImageGenerationClient.java # OpenAI Image Edit API 통신 클라이언트
-├── model/                     # 데이터 및 비즈니스 로직
-│   ├── dto/                   # TripDto, TripSearchDto
-│   └── service/               # TripService, TripServiceImpl
-├── util/                      # XML 파싱 Utility
-│   ├── TouristDestinationSAXHandler.java
-│   └── TouristDestinationSAXParser.java
-└── view/                      # 메인 UI
-    └── TripInfoView.java      # 메인 관광지 정보 화면
+├── model/                             # 데이터 및 비즈니스 로직
+│   ├── dao/                           # 데이터 접근 계층
+│   │   ├── TripDao.java               # 관광지 데이터 DAO 인터페이스
+│   │   └── TripDaoImpl.java           # 관광지 데이터 DAO 구현체
+│   ├── dto/                           # 데이터 전달 객체
+│   │   ├── TripDto.java               # 관광지 정보 DTO
+│   │   └── TripSearchDto.java         # 관광지 검색 조건 DTO
+│   └── service/                       # 비즈니스 로직 계층
+│       ├── TripService.java           # 관광지 서비스 인터페이스
+│       └── TripServiceImpl.java       # 관광지 서비스 구현체
+├── util/                              # XML 파싱 Utility
+│   ├── TouristDestinationSAXHandler.java # SAX 파싱 핸들러
+│   └── TouristDestinationSAXParser.java  # SAX 파서 실행 클래스
+└── view/                              # 메인 UI
+    └── TripInfoView.java              # 메인 관광지 정보 화면
 ```
 ---
 
