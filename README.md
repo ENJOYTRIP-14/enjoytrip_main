@@ -55,22 +55,24 @@ com.ssafy.trip
 
 - 요구 사항 번호: F101
 - XML 로 제공된 관광지 정보를 Parsing 하여 자바의 객체 형태로 변경하고, Swing 을 사용하여 화면에 표시한다
+<img width="1178" height="787" alt="image" src="https://github.com/user-attachments/assets/52abf961-509b-4446-874b-948885aade45" />
 
-![F101 구현 이미지](./img/image01.jpg)
 
 ### 2. 관광지 정보 조건 검색
 
 - 요구 사항 번호: F102
 - 관광지 정보 목록화면의 상단에 검색 조건과 검색어를 입력한 뒤 검색버튼을 클릭하면 조건에 맞는 관광지 정보를 표시한다.
+#### 관광지명 키워드로 검색 시
+<img width="593" height="691" alt="image" src="https://github.com/user-attachments/assets/bc7d4f60-6a01-43d4-898f-fe3592a19810" />
+### 주소 키워드로 검색 시
+<img width="596" height="584" alt="image" src="https://github.com/user-attachments/assets/382e8c3f-9e2c-4efc-a3df-a73abc60f28b" />
 
-![F102 구현 이미지](./img/image02.jpg)
-
-### 3. 관광지 정보 상세 조회
+#### 3. 관광지 정보 상세 조회
 
 - 요구 사항 번호: F103
 - 오른쪽 목록화면의 관광지를 클릭하면 왼쪽에 상세 조회 결과 화면이 출력된다.
+<img width="1177" height="783" alt="image" src="https://github.com/user-attachments/assets/063b9b5f-5dc6-490e-a873-6639f084ebea" />
 
-![F103 구현 이미지](./img/image03.jpg)
 
 ### 4. AI 관광 시뮬레이션
 
