@@ -69,7 +69,7 @@ com.ssafy.trip
 <img width="596" height="584" alt="image" src="https://github.com/user-attachments/assets/382e8c3f-9e2c-4efc-a3df-a73abc60f28b" />
 
 
-#### 3. 관광지 정보 상세 조회
+### 3. 관광지 정보 상세 조회
 
 - 요구 사항 번호: F103
 - 오른쪽 목록화면의 관광지를 클릭하면 왼쪽에 상세 조회 결과 화면이 출력된다.
