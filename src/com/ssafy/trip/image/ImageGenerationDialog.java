@@ -226,11 +226,10 @@ public class ImageGenerationDialog extends JDialog {
 					showGenerationError(exception);
 				} catch (ExecutionException exception) {
 					showGenerationError(exception.getCause());
+				} finally {
+					// 생성 완료 또는 실패 후에는 대기 시간 갱신을 중지한다.
+					stopWaitingTimer();
 				}
-				
-				
-				
-				
 			}
 		}.execute();
 	}
