@@ -7,7 +7,7 @@ SSAFY 16기 서울 14반 양유진, 정지혁
 
 ---
 
-## 🛠️ 개발 및 실행 환경 (Environment)
+## 개발 및 실행 환경 (Environment)
 
 - **Language:** Java 8 / 11 이상
 - **GUI Framework:** Java Swing
@@ -16,7 +16,7 @@ SSAFY 16기 서울 14반 양유진, 정지혁
 
 ---
 
-## 📁 패키지 구조 (Package Structure)
+## 패키지 구조 (Package Structure)
 ```
 com.ssafy.trip
 ├── image/                     # AI 이미지 생성 모듈
